@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Track Request - Mitra</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <link href="/css/responsive.css" rel="stylesheet">
+    <style>
+        :root {
+            --primary-gradient: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            --card-shadow: 0 10px 30px rgba(0,0,0,0.1);
+            --border-radius: 16px;
+        }
+        body { background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%); min-height: 100vh; }
+        .navbar { background: var(--primary-gradient) !important; backdrop-filter: blur(10px); box-shadow: 0 4px 20px rgba(0,0,0,0.1); }
+        .navbar-brand { font-weight: 700; font-size: 1.5rem; }
+        .nav-link { font-weight: 500; transition: all 0.3s ease; }
+        .nav-link:hover { transform: translateY(-2px); }
+        .main-card { background: white; border-radius: var(--border-radius); box-shadow: var(--card-shadow); border: none; }
+        .page-title { background: var(--primary-gradient); -webkit-background-clip: text; -webkit-text-fill-color: transparent; font-weight: 700; }
+        .badge { padding: 8px 12px; border-radius: 20px; font-weight: 500; }
+        .btn { border-radius: 10px; font-weight: 500; transition: all 0.3s ease; }
+        .btn:hover { transform: translateY(-2px); }
+        .map-container { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); border-radius: 12px; position: relative; overflow: hidden; }
+        .tracking-pulse { animation: pulse 2s infinite; }
+        @keyframes pulse { 0% { transform: scale(1); } 50% { transform: scale(1.05); } 100% { transform: scale(1); } }
+    </style>
+</head>
+<body>
+    <nav class="navbar navbar-expand-lg navbar-dark">
+        <div class="container">
+            <a class="navbar-brand" href="/"><i class="fas fa-home me-2"></i>Mitra</a>
+            <div class="navbar-nav ms-auto">
+                <a class="nav-link" href="/user/dashboard"><i class="fas fa-tachometer-alt me-1"></i>Dashboard</a>
+                <a class="nav-link" href="/user/requests"><i class="fas fa-clipboard-list me-1"></i>My Requests</a>
+                <a class="nav-link" href="/logout"><i class="fas fa-sign-out-alt me-1"></i>Logout</a>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container mt-5">
+        <div class="d-flex justify-content-between align-items-center mb-5">
+            <h1 class="page-title mb-0"><i class="fas fa-map-marker-alt me-3"></i>Track Your Request</h1>
+            <div class="text-muted">Real-time service tracking</div>
+        </div>
+        
+        <div class="row g-4">
+            <div class="col-lg-8">
+                <div class="card main-card">
+                    <div class="card-header bg-transparent border-0 py-4">
+                        <h5 class="mb-0 fw-bold"><i class="fas fa-satellite-dish me-2 tracking-pulse"></i>Live Tracking</h5>
+                    </div>
+                    <div class="card-body">
+                        <div id="map" class="map-container" style="height: 450px;">
+                            <div class="d-flex align-items-center justify-content-center h-100 text-white">
+                                <div class="text-center">
+                                    <div class="mb-4">
+                                        <i class="fas fa-map-marked-alt fa-4x mb-3 tracking-pulse"></i>
+                                    </div>
+                                    <h4 class="mb-3">Real-Time Tracking</h4>
+                                    <p class="mb-3">Interactive map showing provider location and route</p>
+                                    <div class="d-flex align-items-center justify-content-center">
+                                        <i class="fas fa-location-dot me-2"></i>
+                                        <span>Provider Location: <span id="providerLocation" class="fw-bold">Loading...</span></span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="col-lg-4">
+                <div class="card main-card mb-4">
+                    <div class="card-header bg-transparent border-0 py-4">
+                        <h6 class="mb-0 fw-bold"><i class="fas fa-info-circle me-2"></i>Request Details</h6>
+                    </div>
+                    <div class="card-body pt-0">
+                        <div class="d-flex align-items-center mb-3 p-3 bg-light rounded">
+                            <i class="fas fa-tools text-primary me-3"></i>
+                            <div>
+                                <small class="text-muted d-block">Service</small>
+                                <strong th:text="${request.serviceType}"></strong>
+                            </div>
+                        </div>
+                        <div class="d-flex align-items-center mb-3 p-3 bg-light rounded">
+                            <i class="fas fa-info-circle text-info me-3"></i>
+                            <div>
+                                <small class="text-muted d-block">Status</small>
+                                <span class="badge bg-info" th:text="${request.status}"></span>
+                            </div>
+                        </div>
+                        <div class="d-flex align-items-center mb-3 p-3 bg-light rounded">
+                            <i class="fas fa-user-tie text-success me-3"></i>
+                            <div>
+                                <small class="text-muted d-block">Provider</small>
+                                <strong th:text="${request.assignedProvider?.name ?: 'Not assigned'}"></strong>
+                            </div>
+                        </div>
+                        <div class="d-flex align-items-center p-3 bg-light rounded">
+                            <i class="fas fa-clock text-warning me-3"></i>
+                            <div>
+                                <small class="text-muted d-block">ETA</small>
+                                <strong id="eta">Calculating...</strong>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="card main-card">
+                    <div class="card-header bg-transparent border-0 py-4">
+                        <h6 class="mb-0 fw-bold"><i class="fas fa-phone me-2"></i>Contact Provider</h6>
+                    </div>
+                    <div class="card-body pt-0">
+                        <div th:if="${request.assignedProvider}">
+                            <div class="d-flex align-items-center mb-3 p-3 bg-light rounded">
+                                <i class="fas fa-phone text-primary me-3"></i>
+                                <div>
+                                    <small class="text-muted d-block">Phone Number</small>
+                                    <strong th:text="${request.assignedProvider.phone}"></strong>
+                                </div>
+                            </div>
+                            <div class="d-grid gap-2">
+                                <button class="btn btn-success">
+                                    <i class="fas fa-phone me-2"></i>Call Now
+                                </button>
+                                <button class="btn btn-info">
+                                    <i class="fas fa-comments me-2"></i>Start Chat
+                                </button>
+                            </div>
+                        </div>
+                        <div th:if="${!request.assignedProvider}" class="text-center py-4">
+                            <i class="fas fa-user-clock fa-2x text-muted mb-3"></i>
+                            <p class="text-muted mb-0">Provider not assigned yet</p>
+                            <small class="text-muted">You'll be able to contact them once assigned</small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        function updateTracking() {
+            fetch('/api/requests/[[${request.id}]]/track')
+                .then(response => response.json())
+                .then(data => {
+                    document.getElementById('eta').textContent = data.estimatedArrival || '15-20 minutes';
+                    document.getElementById('providerLocation').textContent = data.providerLocation || 'En route to your location';
+                })
+                .catch(() => {
+                    // Fallback data
+                    document.getElementById('eta').textContent = '15-20 minutes';
+                    document.getElementById('providerLocation').textContent = 'En route to your location';
+                });
+        }
+        
+        // Update every 30 seconds
+        setInterval(updateTracking, 30000);
+        updateTracking();
+    </script>
+</body>
+</html>

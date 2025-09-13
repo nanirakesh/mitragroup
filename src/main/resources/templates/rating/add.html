@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Rate Service - Mitra</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <link href="/css/responsive.css" rel="stylesheet">
+    <style>
+        :root {
+            --primary-gradient: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            --card-shadow: 0 10px 30px rgba(0,0,0,0.1);
+            --border-radius: 16px;
+        }
+        body { background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%); min-height: 100vh; }
+        .navbar { background: var(--primary-gradient) !important; backdrop-filter: blur(10px); box-shadow: 0 4px 20px rgba(0,0,0,0.1); }
+        .navbar-brand { font-weight: 700; font-size: 1.5rem; }
+        .nav-link { font-weight: 500; transition: all 0.3s ease; }
+        .nav-link:hover { transform: translateY(-2px); }
+        .main-card { background: white; border-radius: var(--border-radius); box-shadow: var(--card-shadow); border: none; }
+        .page-title { background: var(--primary-gradient); -webkit-background-clip: text; -webkit-text-fill-color: transparent; font-weight: 700; }
+        .btn { border-radius: 10px; font-weight: 500; transition: all 0.3s ease; }
+        .btn:hover { transform: translateY(-2px); }
+        .form-control { border-radius: 10px; border: 2px solid #e9ecef; transition: all 0.3s ease; }
+        .form-control:focus { border-color: #667eea; box-shadow: 0 0 0 0.2rem rgba(102, 126, 234, 0.25); }
+        .rating-stars { display: flex; gap: 10px; justify-content: center; margin: 20px 0; }
+        .rating-stars input[type="radio"] { display: none; }
+        .rating-stars label { font-size: 3rem; color: #e9ecef; cursor: pointer; transition: all 0.3s ease; }
+        .rating-stars label:hover { color: #ffc107; transform: scale(1.1); }
+        .rating-stars input[type="radio"]:checked + label { color: #ffc107; }
+        .rating-stars input[type="radio"]:checked ~ input + label { color: #e9ecef; }
+        .service-info { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; border-radius: 12px; padding: 20px; margin-bottom: 30px; }
+    </style>
+</head>
+<body>
+    <nav class="navbar navbar-expand-lg navbar-dark">
+        <div class="container">
+            <a class="navbar-brand" href="/"><i class="fas fa-home me-2"></i>Mitra</a>
+            <div class="navbar-nav ms-auto">
+                <a class="nav-link" href="/user/dashboard"><i class="fas fa-tachometer-alt me-1"></i>Dashboard</a>
+                <a class="nav-link" href="/logout"><i class="fas fa-sign-out-alt me-1"></i>Logout</a>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container mt-5">
+        <div class="text-center mb-5">
+            <h1 class="page-title mb-2"><i class="fas fa-star me-3"></i>Rate Your Service</h1>
+            <p class="text-muted">Help us improve by sharing your experience</p>
+        </div>
+        
+        <div class="row justify-content-center">
+            <div class="col-lg-8">
+                <div class="card main-card">
+                    <div class="card-body p-5">
+                        <div class="service-info text-center">
+                            <i class="fas fa-check-circle fa-3x mb-3"></i>
+                            <h4 class="mb-2" th:text="${request.title}"></h4>
+                            <p class="mb-2" th:text="${request.description}"></p>
+                            <div class="d-flex align-items-center justify-content-center">
+                                <i class="fas fa-user-tie me-2"></i>
+                                <strong>Provider: <span th:text="${request.assignedProvider.name}"></span></strong>
+                            </div>
+                        </div>
+
+                        <form th:action="@{/rating/add/{id}(id=${request.id})}" th:object="${rating}" method="post">
+                            <div class="text-center mb-4">
+                                <label class="form-label h5 mb-3">How would you rate this service?</label>
+                                <div class="rating-stars">
+                                    <input type="radio" th:field="*{rating}" value="1" id="star1">
+                                    <label for="star1"><i class="fas fa-star"></i></label>
+                                    <input type="radio" th:field="*{rating}" value="2" id="star2">
+                                    <label for="star2"><i class="fas fa-star"></i></label>
+                                    <input type="radio" th:field="*{rating}" value="3" id="star3">
+                                    <label for="star3"><i class="fas fa-star"></i></label>
+                                    <input type="radio" th:field="*{rating}" value="4" id="star4">
+                                    <label for="star4"><i class="fas fa-star"></i></label>
+                                    <input type="radio" th:field="*{rating}" value="5" id="star5">
+                                    <label for="star5"><i class="fas fa-star"></i></label>
+                                </div>
+                                <div class="rating-text mt-2">
+                                    <small class="text-muted">Click on stars to rate</small>
+                                </div>
+                            </div>
+
+                            <div class="mb-4">
+                                <label for="comment" class="form-label h6"><i class="fas fa-comment me-2"></i>Share Your Experience</label>
+                                <textarea class="form-control" th:field="*{comment}" rows="5" 
+                                         placeholder="Tell us about your experience with this service..."></textarea>
+                                <div class="form-text">Your feedback helps us improve our services</div>
+                            </div>
+
+                            <div class="d-grid gap-3 d-md-flex justify-content-md-center">
+                                <a href="/user/dashboard" class="btn btn-outline-secondary btn-lg px-4">
+                                    <i class="fas fa-times me-2"></i>Cancel
+                                </a>
+                                <button type="submit" class="btn btn-primary btn-lg px-4">
+                                    <i class="fas fa-paper-plane me-2"></i>Submit Rating
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        // Enhanced star rating interaction
+        document.querySelectorAll('.rating-stars input[type="radio"]').forEach((radio, index) => {
+            radio.addEventListener('change', function() {
+                const ratingText = document.querySelector('.rating-text small');
+                const ratings = ['Poor', 'Fair', 'Good', 'Very Good', 'Excellent'];
+                ratingText.textContent = ratings[index] + ' - Thank you for your rating!';
+                ratingText.className = 'text-warning fw-bold';
+            });
+        });
+        
+        // Star hover effects
+        document.querySelectorAll('.rating-stars label').forEach((label, index) => {
+            label.addEventListener('mouseenter', function() {
+                // Highlight stars up to hovered star
+                document.querySelectorAll('.rating-stars label').forEach((l, i) => {
+                    if (i <= index) {
+                        l.style.color = '#ffc107';
+                    } else {
+                        l.style.color = '#e9ecef';
+                    }
+                });
+            });
+        });
+        
+        document.querySelector('.rating-stars').addEventListener('mouseleave', function() {
+            // Reset to selected rating
+            const checked = document.querySelector('.rating-stars input[type="radio"]:checked');
+            document.querySelectorAll('.rating-stars label').forEach((label, index) => {
+                if (checked && index < checked.value) {
+                    label.style.color = '#ffc107';
+                } else {
+                    label.style.color = '#e9ecef';
+                }
+            });
+        });
+    </script>
+</body>
+</html>

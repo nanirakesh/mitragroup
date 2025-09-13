@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Notifications - Mitra</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <link href="/css/responsive.css" rel="stylesheet">
+    <style>
+        :root {
+            --primary-gradient: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            --card-shadow: 0 10px 30px rgba(0,0,0,0.1);
+            --border-radius: 16px;
+        }
+        body { background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%); min-height: 100vh; }
+        .navbar { background: var(--primary-gradient) !important; backdrop-filter: blur(10px); box-shadow: 0 4px 20px rgba(0,0,0,0.1); }
+        .navbar-brand { font-weight: 700; font-size: 1.5rem; }
+        .nav-link { font-weight: 500; transition: all 0.3s ease; }
+        .nav-link:hover { transform: translateY(-2px); }
+        .notification-card { background: white; border-radius: var(--border-radius); box-shadow: var(--card-shadow); border: none; transition: all 0.3s ease; }
+        .notification-card:hover { transform: translateY(-2px); box-shadow: 0 15px 35px rgba(0,0,0,0.15); }
+        .notification-card.unread { border-left: 4px solid #667eea; }
+        .main-card { background: white; border-radius: var(--border-radius); box-shadow: var(--card-shadow); border: none; }
+        .page-title { background: var(--primary-gradient); -webkit-background-clip: text; -webkit-text-fill-color: transparent; font-weight: 700; }
+        .badge { padding: 8px 12px; border-radius: 20px; font-weight: 500; }
+        .btn { border-radius: 10px; font-weight: 500; transition: all 0.3s ease; }
+        .btn:hover { transform: translateY(-2px); }
+        .notification-icon { width: 40px; height: 40px; border-radius: 50%; display: flex; align-items: center; justify-content: center; }
+    </style>
+</head>
+<body>
+    <nav class="navbar navbar-expand-lg navbar-dark">
+        <div class="container">
+            <a class="navbar-brand" href="/"><i class="fas fa-home me-2"></i>Mitra</a>
+            <div class="navbar-nav ms-auto">
+                <a class="nav-link" href="/user/dashboard"><i class="fas fa-tachometer-alt me-1"></i>Dashboard</a>
+                <a class="nav-link" href="/user/requests"><i class="fas fa-clipboard-list me-1"></i>My Requests</a>
+                <a class="nav-link active" href="/user/notifications">
+                    <i class="fas fa-bell me-1"></i>Notifications
+                    <span th:if="${unreadCount > 0}" class="badge bg-danger ms-1" th:text="${unreadCount}"></span>
+                </a>
+                <a class="nav-link" href="/logout"><i class="fas fa-sign-out-alt me-1"></i>Logout</a>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container mt-5">
+        <div class="d-flex justify-content-between align-items-center mb-5">
+            <h1 class="page-title mb-0"><i class="fas fa-bell me-3"></i>Notifications</h1>
+            <div class="text-muted">Stay updated with your requests</div>
+        </div>
+        
+        <div th:if="${#lists.isEmpty(notifications)}" class="text-center py-5">
+            <div class="card main-card">
+                <div class="card-body py-5">
+                    <i class="fas fa-bell-slash fa-4x text-muted mb-4"></i>
+                    <h4 class="text-muted mb-2">No Notifications Yet</h4>
+                    <p class="text-muted mb-0">You'll receive notifications about your service requests here.</p>
+                </div>
+            </div>
+        </div>
+
+        <div th:if="${!#lists.isEmpty(notifications)}">
+            <div class="row g-4">
+                <div class="col-lg-8">
+                    <div th:each="notification : ${notifications}" 
+                         class="card notification-card mb-4" 
+                         th:classappend="${!notification.read} ? 'unread' : ''">
+                        <div class="card-body">
+                            <div class="d-flex align-items-start">
+                                <div class="notification-icon me-3" 
+                                     th:classappend="${notification.type.name() == 'REQUEST_UPDATE'} ? 'bg-info bg-opacity-10 text-info' : 
+                                                    (${notification.type.name() == 'PROVIDER_ASSIGNED'} ? 'bg-success bg-opacity-10 text-success' : 
+                                                    (${notification.type.name() == 'PAYMENT_REMINDER'} ? 'bg-warning bg-opacity-10 text-warning' : 'bg-secondary bg-opacity-10 text-secondary'))">
+                                    <i class="fas" 
+                                       th:classappend="${notification.type.name() == 'REQUEST_UPDATE'} ? 'fa-info-circle' : 
+                                                      (${notification.type.name() == 'PROVIDER_ASSIGNED'} ? 'fa-user-check' : 
+                                                      (${notification.type.name() == 'PAYMENT_REMINDER'} ? 'fa-credit-card' : 'fa-bell'))"></i>
+                                </div>
+                                <div class="flex-grow-1">
+                                    <div class="d-flex justify-content-between align-items-start mb-2">
+                                        <h6 class="card-title mb-0 fw-bold" th:text="${notification.title}"></h6>
+                                        <small class="text-muted" th:text="${#temporals.format(notification.createdAt, 'MMM dd, HH:mm')}"></small>
+                                    </div>
+                                    <p class="card-text text-muted mb-3" th:text="${notification.message}"></p>
+                                    <div class="d-flex justify-content-between align-items-center">
+                                        <span class="badge" 
+                                              th:classappend="${notification.type.name() == 'REQUEST_UPDATE'} ? 'bg-info' : 
+                                                             (${notification.type.name() == 'PROVIDER_ASSIGNED'} ? 'bg-success' : 
+                                                             (${notification.type.name() == 'PAYMENT_REMINDER'} ? 'bg-warning' : 'bg-secondary'))"
+                                              th:text="${notification.type}"></span>
+                                        <div th:if="${!notification.read}">
+                                            <button class="btn btn-sm btn-outline-primary" 
+                                                    onclick="markAsRead([[${notification.id}]])">
+                                                <i class="fas fa-check me-1"></i>Mark as Read
+                                            </button>
+                                        </div>
+                                        <div th:if="${notification.read}">
+                                            <span class="text-success"><i class="fas fa-check-circle me-1"></i>Read</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="col-lg-4">
+                    <div class="card main-card sticky-top" style="top: 2rem;">
+                        <div class="card-header bg-transparent border-0 py-4">
+                            <h6 class="mb-0 fw-bold"><i class="fas fa-chart-bar me-2"></i>Notification Summary</h6>
+                        </div>
+                        <div class="card-body pt-0">
+                            <div class="d-flex justify-content-between align-items-center mb-3 p-3 bg-light rounded">
+                                <div class="d-flex align-items-center">
+                                    <i class="fas fa-bell text-primary me-2"></i>
+                                    <strong>Total</strong>
+                                </div>
+                                <span class="badge bg-primary" th:text="${#lists.size(notifications)}"></span>
+                            </div>
+                            <div class="d-flex justify-content-between align-items-center mb-3 p-3 bg-light rounded">
+                                <div class="d-flex align-items-center">
+                                    <i class="fas fa-exclamation-circle text-danger me-2"></i>
+                                    <strong>Unread</strong>
+                                </div>
+                                <span class="badge bg-danger" th:text="${unreadCount}"></span>
+                            </div>
+                            <div class="d-flex justify-content-between align-items-center p-3 bg-light rounded">
+                                <div class="d-flex align-items-center">
+                                    <i class="fas fa-check-circle text-success me-2"></i>
+                                    <strong>Read</strong>
+                                </div>
+                                <span class="badge bg-success" th:text="${#lists.size(notifications) - unreadCount}"></span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        function markAsRead(notificationId) {
+            fetch('/api/notifications/' + notificationId + '/read', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                }
+            }).then(() => {
+                location.reload();
+            }).catch(() => {
+                // Fallback - just reload the page
+                location.reload();
+            });
+        }
+    </script>
+</body>
+</html>

@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="_csrf" th:content="${_csrf.token}"/>
+    <title>Dashboard - Mitra</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <link rel="stylesheet" href="/css/responsive.css">
+    <style>
+        .dashboard-gradient { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); }
+        .stats-card { transition: transform 0.3s ease; border: none; box-shadow: 0 4px 15px rgba(0,0,0,0.1); }
+        .stats-card:hover { transform: translateY(-5px); }
+        .table-modern { border-radius: 10px; overflow: hidden; box-shadow: 0 4px 15px rgba(0,0,0,0.1); }
+    </style>
+</head>
+<body>
+    <nav class="navbar navbar-expand-lg navbar-dark dashboard-gradient">
+        <div class="container">
+            <a class="navbar-brand fw-bold" href="/">
+                <i class="fas fa-home me-2"></i>Mitra
+            </a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <div class="navbar-nav me-auto">
+                    <a class="nav-link active" href="/user/dashboard"><i class="fas fa-tachometer-alt me-1"></i>Dashboard</a>
+                    <a class="nav-link" href="/user/requests"><i class="fas fa-list me-1"></i>My Requests</a>
+                </div>
+                <div class="navbar-nav ms-auto">
+                    <span class="navbar-text me-3">
+                        <i class="fas fa-user-circle me-1"></i>Welcome, <span th:text="${user.firstName}" class="fw-semibold"></span>
+                    </span>
+                    <form method="post" action="/logout" style="display: inline;">
+                        <input type="hidden" name="_csrf" th:value="${_csrf.token}"/>
+                        <button type="submit" class="nav-link btn btn-link p-0 border-0" style="color: inherit; text-decoration: none;">
+                            <i class="fas fa-sign-out-alt me-1"></i>Logout
+                        </button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container mt-4">
+        <!-- Stats Cards -->
+        <div class="row mb-4">
+            <div class="col-lg-3 col-md-6 mb-3">
+                <div class="card stats-card text-center p-3">
+                    <i class="fas fa-list-alt text-primary" style="font-size: 2rem;"></i>
+                    <h4 class="mt-2 mb-1" th:text="${#lists.size(requests)}">0</h4>
+                    <small class="text-muted">Total Requests</small>
+                </div>
+            </div>
+            <div class="col-lg-3 col-md-6 mb-3">
+                <div class="card stats-card text-center p-3">
+                    <i class="fas fa-clock text-warning" style="font-size: 2rem;"></i>
+                    <h4 class="mt-2 mb-1" th:text="${#lists.size(requests.?[status.name() == 'PENDING'])}">0</h4>
+                    <small class="text-muted">Pending</small>
+                </div>
+            </div>
+            <div class="col-lg-3 col-md-6 mb-3">
+                <div class="card stats-card text-center p-3">
+                    <i class="fas fa-cogs text-info" style="font-size: 2rem;"></i>
+                    <h4 class="mt-2 mb-1" th:text="${#lists.size(requests.?[status.name() == 'IN_PROGRESS'])}">0</h4>
+                    <small class="text-muted">In Progress</small>
+                </div>
+            </div>
+            <div class="col-lg-3 col-md-6 mb-3">
+                <div class="card stats-card text-center p-3">
+                    <i class="fas fa-check-circle text-success" style="font-size: 2rem;"></i>
+                    <h4 class="mt-2 mb-1" th:text="${#lists.size(requests.?[status.name() == 'COMPLETED'])}">0</h4>
+                    <small class="text-muted">Completed</small>
+                </div>
+            </div>
+        </div>
+        
+        <div class="row">
+            <div class="col-md-12">
+                <div class="d-flex justify-content-between align-items-center mb-4">
+                    <h2><i class="fas fa-clipboard-list me-2"></i>My Service Requests</h2>
+                    <a href="/user/request/new" class="btn btn-primary btn-lg">
+                        <i class="fas fa-plus me-2"></i>New Request
+                    </a>
+                </div>
+
+                <div th:if="${#lists.isEmpty(requests)}" class="text-center py-5">
+                    <i class="fas fa-clipboard-list text-muted" style="font-size: 4rem;"></i>
+                    <h4 class="mt-3 mb-2">No Service Requests Yet</h4>
+                    <p class="text-muted mb-4">Start by creating your first service request to get professional help at your doorstep.</p>
+                    <a href="/user/request/new" class="btn btn-primary btn-lg">
+                        <i class="fas fa-plus me-2"></i>Create First Request
+                    </a>
+                </div>
+
+                <div th:if="${!#lists.isEmpty(requests)}">
+                    <div class="table-responsive table-modern">
+                        <table class="table table-hover mb-0">
+                            <thead>
+                                <tr>
+                                    <th>Title</th>
+                                    <th>Service Type</th>
+                                    <th>Status</th>
+                                    <th>Priority</th>
+                                    <th>Cost</th>
+                                    <th>Created</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr th:each="request : ${requests}">
+                                    <td th:text="${request.title}"></td>
+                                    <td th:text="${request.serviceType}"></td>
+                                    <td>
+                                        <span class="badge" 
+                                              th:classappend="${request.status.name() == 'PENDING'} ? 'bg-warning' : 
+                                                             (${request.status.name() == 'ASSIGNED'} ? 'bg-info' : 
+                                                             (${request.status.name() == 'IN_PROGRESS'} ? 'bg-primary' : 
+                                                             (${request.status.name() == 'COMPLETED'} ? 'bg-success' : 'bg-danger')))"
+                                              th:text="${request.status}"></span>
+                                        <div th:if="${request.status.name() == 'PENDING'}" class="small text-muted mt-1">
+                                            <i class="fas fa-clock"></i> In waitlist - No workers available
+                                        </div>
+                                    </td>
+                                    <td th:text="${request.priority}"></td>
+                                    <td>
+                                        <span th:if="${request.actualCost != null}" th:text="'₹' + ${request.actualCost}"></span>
+                                        <span th:if="${request.actualCost == null and request.estimatedCost != null}" 
+                                              th:text="'₹' + ${request.estimatedCost} + ' (Est.)'"></span>
+                                        <span th:if="${request.actualCost == null and request.estimatedCost == null}">-</span>
+                                    </td>
+                                    <td th:text="${#temporals.format(request.createdAt, 'MMM dd, yyyy')}"></td>
+                                    <td>
+                                        <a th:href="@{/user/request/{id}(id=${request.id})}" class="btn btn-sm btn-outline-primary">View</a>
+                                        <a th:if="${request.status.name() == 'COMPLETED' and request.assignedProvider != null}" 
+                                           th:href="@{/rating/add/{id}(id=${request.id})}" 
+                                           class="btn btn-sm btn-warning ms-1">Rate</a>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <script src="/js/common.js"></script>
+</body>
+</html>
