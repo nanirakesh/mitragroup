@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # Server Setup Script for CI/CD
-# Run this once on your server (65.2.171.45) to prepare for automated deployments
+# Usage: ./setup-server.sh [SERVER_IP]
 
 SERVER_USER="ubuntu"
 APP_DIR="/home/$SERVER_USER/mitra"
@@ -89,7 +89,7 @@ nohup java -jar -Dspring.profiles.active=prod $JAR_FILE > $LOG_FILE 2>&1 &
 echo $! > $PID_FILE
 
 echo "Mitra started with PID $(cat $PID_FILE)"
-echo "Access: http://3.6.93.97:8080"
+echo "Access: http://${1:-$(curl -s ifconfig.me 2>/dev/null || echo 'SERVER_IP')}:8080"
 EOF
 
 # Create stop script
@@ -134,7 +134,7 @@ sudo ufw allow 8080/tcp 2>/dev/null || echo "Firewall configured or not availabl
 
 echo "✅ Server setup complete!"
 echo "📁 Application directory: $APP_DIR"
-echo "🌐 Application will be available at: http://3.6.93.97:8080"
+echo "🌐 Application will be available at: http://${1:-$(curl -s ifconfig.me 2>/dev/null || echo 'SERVER_IP')}:8080"
 echo ""
 echo "Next steps:"
 echo "1. Push your code to GitHub"

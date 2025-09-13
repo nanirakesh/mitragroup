@@ -4,6 +4,15 @@ on:
   push:
     branches: [ main, master ]
   workflow_dispatch:
+    inputs:
+      deploy_region:
+        description: 'Deploy to specific region (current/global)'
+        required: false
+        default: 'current'
+        type: choice
+        options:
+        - current
+        - global
 
 jobs:
   deploy:
