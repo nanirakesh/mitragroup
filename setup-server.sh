@@ -89,7 +89,8 @@ nohup java -jar -Dspring.profiles.active=prod $JAR_FILE > $LOG_FILE 2>&1 &
 echo $! > $PID_FILE
 
 echo "Mitra started with PID $(cat $PID_FILE)"
-echo "Access: http://${1:-$(curl -s ifconfig.me 2>/dev/null || echo 'SERVER_IP')}:8080"
+SERVER_IP=$(curl -s ifconfig.me 2>/dev/null || curl -s ipinfo.io/ip 2>/dev/null || echo 'localhost')
+echo "Access: http://$SERVER_IP:8080"
 EOF
 
 # Create stop script
