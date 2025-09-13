@@ -72,7 +72,7 @@ jobs:
           ./start.sh
           
           # Wait and verify
-          sleep 10
+          sleep 30
           if curl -f http://localhost:8080/ > /dev/null 2>&1; then
             echo "✅ Deployment successful!"
           else
