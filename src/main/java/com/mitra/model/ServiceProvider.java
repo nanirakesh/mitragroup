@@ -36,6 +36,13 @@ public class ServiceProvider {
     private Double rating = 0.0;
     private Integer completedJobs = 0;
     private LocalDateTime createdAt = LocalDateTime.now();
+    
+    @OneToOne(cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+    @JoinColumn(name = "location_id")
+    private Location location;
+    
+    @Transient
+    private Double distance; // For proximity calculations
 
     @OneToMany(mappedBy = "assignedProvider", cascade = CascadeType.ALL)
     private Set<ServiceRequest> assignedRequests;
@@ -93,4 +100,10 @@ public class ServiceProvider {
     public boolean isAvailable() {
         return status == Status.AVAILABLE;
     }
+    
+    public Location getLocation() { return location; }
+    public void setLocation(Location location) { this.location = location; }
+    
+    public Double getDistance() { return distance; }
+    public void setDistance(Double distance) { this.distance = distance; }
 }

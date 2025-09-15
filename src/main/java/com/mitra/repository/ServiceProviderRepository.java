@@ -17,6 +17,9 @@ public interface ServiceProviderRepository extends JpaRepository<ServiceProvider
     @Query("SELECT p FROM ServiceProvider p JOIN p.skills s WHERE s = :serviceType AND p.status = 'AVAILABLE'")
     List<ServiceProvider> findAvailableProvidersBySkill(@Param("serviceType") ServiceRequest.ServiceType serviceType);
     
+    @Query("SELECT p FROM ServiceProvider p JOIN p.skills s WHERE s = :serviceType AND p.status = :status")
+    List<ServiceProvider> findByStatusAndSkillsContaining(@Param("status") ServiceProvider.Status status, @Param("serviceType") ServiceRequest.ServiceType serviceType);
+    
     List<ServiceProvider> findByNameContainingIgnoreCaseOrEmailContainingIgnoreCase(String name, String email);
     
     boolean existsByEmail(String email);

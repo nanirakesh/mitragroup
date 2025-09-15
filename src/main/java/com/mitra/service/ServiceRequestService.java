@@ -17,6 +17,12 @@ public class ServiceRequestService {
 
     @Autowired
     private ServiceProviderService serviceProviderService;
+    
+    @Autowired
+    private ProximityService proximityService;
+    
+    @Autowired
+    private LocationService locationService;
 
     public ServiceRequest createRequest(ServiceRequest request) {
         return serviceRequestRepository.save(request);
@@ -64,15 +70,24 @@ public class ServiceRequestService {
         Optional<ServiceRequest> requestOpt = serviceRequestRepository.findById(requestId);
         if (requestOpt.isPresent()) {
             ServiceRequest request = requestOpt.get();
+            
+            // Use proximity-based assignment
+            ServiceProvider bestProvider = proximityService.findBestProvider(request);
+            
+            if (bestProvider != null) {
+                return assignProvider(requestId, bestProvider.getId());
+            }
+            
+            // Fallback to old method if no nearby providers
             List<ServiceProvider> availableProviders = serviceProviderService
                 .findAvailableProvidersBySkill(request.getServiceType());
 
             if (!availableProviders.isEmpty()) {
-                ServiceProvider bestProvider = availableProviders.stream()
+                ServiceProvider fallbackProvider = availableProviders.stream()
                     .max((p1, p2) -> Double.compare(p1.getRating(), p2.getRating()))
                     .orElse(availableProviders.get(0));
 
-                return assignProvider(requestId, bestProvider.getId());
+                return assignProvider(requestId, fallbackProvider.getId());
             }
         }
         throw new RuntimeException("No available providers found");
