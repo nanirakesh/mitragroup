@@ -1,52 +1,77 @@
 package com.mitra.config;
 
+import com.mitra.config.JwtAuthenticationFilter;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
+import org.springframework.security.config.http.SessionCreationPolicy;
+import org.springframework.security.core.session.SessionRegistry;
+import org.springframework.security.core.session.SessionRegistryImpl;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
-import org.springframework.security.core.session.SessionRegistry;
-import org.springframework.security.core.session.SessionRegistryImpl;
-import org.springframework.security.web.session.HttpSessionEventPublisher;
+import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 import org.springframework.security.web.header.writers.ReferrerPolicyHeaderWriter;
-import org.springframework.security.config.http.SessionCreationPolicy;
+import org.springframework.security.web.session.HttpSessionEventPublisher;
 import org.springframework.security.web.util.matcher.AntPathRequestMatcher;
 
 @Configuration
 @EnableWebSecurity
 public class SecurityConfig {
 
+    private final JwtAuthenticationFilter jwtAuthenticationFilter;
+
+    public SecurityConfig(JwtAuthenticationFilter jwtAuthenticationFilter) {
+        this.jwtAuthenticationFilter = jwtAuthenticationFilter;
+    }
+
     @Bean
     public PasswordEncoder passwordEncoder() {
         return new BCryptPasswordEncoder();
     }
-    
+
     @Bean
     public SessionRegistry sessionRegistry() {
         return new SessionRegistryImpl();
     }
-    
+
     @Bean
     public HttpSessionEventPublisher httpSessionEventPublisher() {
         return new HttpSessionEventPublisher();
     }
 
     @Bean
+    public AuthenticationManager authenticationManager(AuthenticationConfiguration config) throws Exception {
+        return config.getAuthenticationManager();
+    }
+
+    @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
         http
             .authorizeHttpRequests(authz -> authz
-                .requestMatchers("/", "/register", "/login", "/forgot-password", "/reset-password", "/verify-email", "/css/**", "/js/**", "/images/**", "/h2-console/**").permitAll()
-                .requestMatchers("/admin/**").hasRole("ADMIN")
-                .requestMatchers("/provider/**").hasRole("PROVIDER")
+                .requestMatchers("/", "/register", "/login", "/forgot-password", "/reset-password", "/verify-email", "/css/**", "/js/**", "/images/**", "/api/auth/**").permitAll()
+                .requestMatchers("/admin/**", "/h2-console/**").hasRole("ADMIN")
+                .requestMatchers("/provider/**", "/worker/**").hasRole("PROVIDER")
+                .requestMatchers("/user/**").hasRole("USER")
                 .requestMatchers("/api/**").authenticated()
                 .requestMatchers("/dashboard").authenticated()
                 .anyRequest().authenticated()
             )
             .formLogin(form -> form
                 .loginPage("/login")
-                .defaultSuccessUrl("/dashboard", true)
+                .successHandler((request, response, authentication) -> {
+                    String role = authentication.getAuthorities().iterator().next().getAuthority();
+                    if (role.equals("ROLE_ADMIN")) {
+                        response.sendRedirect("/admin/dashboard");
+                    } else if (role.equals("ROLE_PROVIDER")) {
+                        response.sendRedirect("/worker/dashboard");
+                    } else {
+                        response.sendRedirect("/user/dashboard");
+                    }
+                })
                 .failureUrl("/login?error=true")
                 .usernameParameter("username")
                 .passwordParameter("password")
@@ -81,8 +106,8 @@ public class SecurityConfig {
                     .includeSubDomains(true)
                 )
                 .referrerPolicy(ReferrerPolicyHeaderWriter.ReferrerPolicy.STRICT_ORIGIN_WHEN_CROSS_ORIGIN)
-                .and()
-            );
+            )
+            .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
 
         return http.build();
     }

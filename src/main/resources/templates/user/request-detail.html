@@ -156,6 +156,16 @@
                             </button>
                         </div>
                         <div th:if="${request.status.name() == 'COMPLETED'}">
+                            <div th:if="${request.paymentStatus == null or request.paymentStatus.name() == 'PENDING'}">
+                                <a th:href="@{/payment/request/{id}(id=${request.id})}" class="btn btn-success btn-sm mt-2">
+                                    <i class="fas fa-credit-card"></i> Pay Now
+                                </a>
+                            </div>
+                            <div th:if="${request.paymentStatus != null and request.paymentStatus.name() == 'PAID'}">
+                                <span class="badge bg-success mt-2">
+                                    <i class="fas fa-check"></i> Paid
+                                </span>
+                            </div>
                             <button class="btn btn-warning btn-sm mt-2">
                                 <i class="fas fa-star"></i> Rate Provider
                             </button>

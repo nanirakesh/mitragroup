@@ -116,7 +116,22 @@ public class AdminController {
         }
 
         try {
+            // Create user account for provider
+            User providerUser = new User();
+            providerUser.setEmail(provider.getEmail());
+            providerUser.setPassword("worker123"); // Default password
+            
+            String[] nameParts = provider.getName().trim().split(" ", 2);
+            providerUser.setFirstName(nameParts[0]);
+            providerUser.setLastName(nameParts.length > 1 ? nameParts[1] : "Worker");
+            
+            providerUser.setPhone(provider.getPhone());
+            providerUser.setRole(User.Role.PROVIDER);
+            
+            userService.registerUser(providerUser);
             serviceProviderService.registerProvider(provider);
+            
+            model.addAttribute("success", "Provider created! Login: " + provider.getEmail() + " / worker123");
             return "redirect:/admin/providers";
         } catch (Exception e) {
             model.addAttribute("error", "Registration failed: " + e.getMessage());

@@ -1,9 +1,12 @@
 package com.mitra.controller;
 
+import com.mitra.model.Location;
 import com.mitra.model.ServiceRequest;
 import com.mitra.model.User;
+import com.mitra.service.LocationService;
 import com.mitra.service.ServiceRequestService;
 import com.mitra.service.UserService;
+import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Controller;
@@ -22,6 +25,9 @@ public class UserController {
 
     @Autowired
     private ServiceRequestService serviceRequestService;
+    
+    @Autowired
+    private LocationService locationService;
 
     @GetMapping("/dashboard")
     public String dashboard(Model model, Authentication auth) {
@@ -43,7 +49,7 @@ public class UserController {
 
     @PostMapping("/request/new")
     public String createRequest(@Valid @ModelAttribute("serviceRequest") ServiceRequest request,
-                               BindingResult result, Authentication auth, Model model) {
+                               BindingResult result, Authentication auth, HttpServletRequest httpRequest, Model model) {
         if (result.hasErrors()) {
             model.addAttribute("serviceTypes", ServiceRequest.ServiceType.values());
             model.addAttribute("priorities", ServiceRequest.Priority.values());
@@ -52,7 +58,24 @@ public class UserController {
 
         User user = userService.findByEmail(auth.getName()).orElse(null);
         request.setUser(user);
-        serviceRequestService.createRequest(request);
+        
+        // Auto-detect location from IP if not provided
+        if (request.getLatitude() == null || request.getLongitude() == null) {
+            String clientIP = getClientIP(httpRequest);
+            Location detectedLocation = locationService.getLocationFromIP(clientIP);
+            
+            if (detectedLocation != null) {
+                request.setLatitude(String.valueOf(detectedLocation.getLatitude()));
+                request.setLongitude(String.valueOf(detectedLocation.getLongitude()));
+                
+                if (request.getCity() == null) {
+                    request.setCity(detectedLocation.getCity());
+                }
+            }
+        }
+        
+        // Create request with auto-assignment
+        ServiceRequest createdRequest = serviceRequestService.createRequest(request);
         
         return "redirect:/user/dashboard";
     }
@@ -78,5 +101,13 @@ public class UserController {
         model.addAttribute("user", user);
         model.addAttribute("requests", userRequests);
         return "user/requests";
+    }
+    
+    private String getClientIP(HttpServletRequest request) {
+        String xfHeader = request.getHeader("X-Forwarded-For");
+        if (xfHeader == null) {
+            return request.getRemoteAddr();
+        }
+        return xfHeader.split(",")[0].trim();
     }
 }

@@ -1,9 +1,12 @@
 package com.mitra.service;
 
+import com.mitra.exception.AutoAssignmentException;
 import com.mitra.model.ServiceRequest;
 import com.mitra.model.ServiceProvider;
 import com.mitra.model.User;
 import com.mitra.repository.ServiceRequestRepository;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import java.util.List;
@@ -12,20 +15,29 @@ import java.util.Optional;
 @Service
 public class ServiceRequestService {
 
+    private static final Logger logger = LoggerFactory.getLogger(ServiceRequestService.class);
+
     @Autowired
     private ServiceRequestRepository serviceRequestRepository;
 
     @Autowired
     private ServiceProviderService serviceProviderService;
-    
+
     @Autowired
     private ProximityService proximityService;
-    
-    @Autowired
-    private LocationService locationService;
 
     public ServiceRequest createRequest(ServiceRequest request) {
-        return serviceRequestRepository.save(request);
+        ServiceRequest savedRequest = serviceRequestRepository.save(request);
+
+        // Auto-assign provider immediately after creating request
+        try {
+            return autoAssignProvider(savedRequest.getId());
+        } catch (AutoAssignmentException e) {
+            logger.warn("Auto-assignment failed for request {}: {}", savedRequest.getId(), e.getMessage());
+            // If auto-assignment fails, return the request as pending
+            savedRequest.setStatus(ServiceRequest.Status.PENDING);
+            return serviceRequestRepository.save(savedRequest);
+        }
     }
 
     public List<ServiceRequest> findAllRequests() {
@@ -63,21 +75,21 @@ public class ServiceRequestService {
             serviceProviderService.save(provider);
             return serviceRequestRepository.save(request);
         }
-        throw new RuntimeException("Request or Provider not found");
+        throw new AutoAssignmentException("Request or Provider not found");
     }
 
     public ServiceRequest autoAssignProvider(Long requestId) {
         Optional<ServiceRequest> requestOpt = serviceRequestRepository.findById(requestId);
         if (requestOpt.isPresent()) {
             ServiceRequest request = requestOpt.get();
-            
+
             // Use proximity-based assignment
             ServiceProvider bestProvider = proximityService.findBestProvider(request);
-            
+
             if (bestProvider != null) {
                 return assignProvider(requestId, bestProvider.getId());
             }
-            
+
             // Fallback to old method if no nearby providers
             List<ServiceProvider> availableProviders = serviceProviderService
                 .findAvailableProvidersBySkill(request.getServiceType());
@@ -90,7 +102,7 @@ public class ServiceRequestService {
                 return assignProvider(requestId, fallbackProvider.getId());
             }
         }
-        throw new RuntimeException("No available providers found");
+        throw new AutoAssignmentException("No available providers found for request " + requestId);
     }
 
     public ServiceRequest updateStatus(Long requestId, ServiceRequest.Status status) {
@@ -113,5 +125,13 @@ public class ServiceRequestService {
 
     public void deleteRequest(Long id) {
         serviceRequestRepository.deleteById(id);
+    }
+
+    public ServiceRequest updateRequest(ServiceRequest request) {
+        return serviceRequestRepository.save(request);
+    }
+
+    public List<ServiceRequest> findRequestsByProvider(ServiceProvider provider) {
+        return serviceRequestRepository.findByAssignedProvider(provider);
     }
 }

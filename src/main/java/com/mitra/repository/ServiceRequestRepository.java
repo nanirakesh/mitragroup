@@ -1,5 +1,6 @@
 package com.mitra.repository;
 
+import com.mitra.model.ServiceProvider;
 import com.mitra.model.ServiceRequest;
 import com.mitra.model.User;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -13,4 +14,5 @@ public interface ServiceRequestRepository extends JpaRepository<ServiceRequest, 
     List<ServiceRequest> findByServiceType(ServiceRequest.ServiceType serviceType);
     List<ServiceRequest> findByAssignedProviderIsNull();
     List<ServiceRequest> findByAssignedProvider_Id(Long providerId);
+    List<ServiceRequest> findByAssignedProvider(ServiceProvider provider);
 }

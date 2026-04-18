@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>UPI Payment - Mitra</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+        .payment-gradient { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); }
+        .upi-card { border: none; box-shadow: 0 8px 25px rgba(0,0,0,0.1); border-radius: 15px; }
+        .qr-code { background: white; padding: 20px; border-radius: 10px; text-align: center; }
+        .amount-display { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; border-radius: 10px; padding: 20px; text-align: center; }
+        .upi-apps { display: flex; justify-content: space-around; margin: 20px 0; }
+        .upi-app { text-align: center; padding: 10px; border-radius: 10px; background: #f8f9fa; margin: 5px; }
+    </style>
+</head>
+<body>
+    <nav class="navbar navbar-expand-lg navbar-dark payment-gradient">
+        <div class="container">
+            <a class="navbar-brand fw-bold" href="/user/dashboard">
+                <i class="fas fa-home me-2"></i>Mitra
+            </a>
+        </div>
+    </nav>
+
+    <div class="container mt-4">
+        <div class="row justify-content-center">
+            <div class="col-md-6">
+                <div class="card upi-card">
+                    <div class="card-header bg-primary text-white text-center">
+                        <h4 class="mb-0"><i class="fas fa-mobile-alt me-2"></i>UPI Payment</h4>
+                        <small>Scan QR code or use UPI ID</small>
+                    </div>
+                    <div class="card-body p-4">
+                        <div class="amount-display mb-4">
+                            <h6 class="mb-2">Amount to Pay</h6>
+                            <h2 class="mb-0">₹<span th:text="${amount}"></span></h2>
+                            <small>Service: <span th:text="${serviceRequest.title}"></span></small>
+                        </div>
+
+                        <!-- QR Code Section -->
+                        <div class="qr-code mb-4">
+                            <div style="font-size: 100px; color: #333;">
+                                <i class="fas fa-qrcode"></i>
+                            </div>
+                            <p class="mt-2 mb-0"><strong>Scan with any UPI app</strong></p>
+                            <small class="text-muted">UPI ID: mitra@paytm</small>
+                        </div>
+
+                        <!-- UPI Apps -->
+                        <div class="upi-apps">
+                            <div class="upi-app">
+                                <i class="fab fa-google-pay fa-2x text-primary"></i>
+                                <br><small>GPay</small>
+                            </div>
+                            <div class="upi-app">
+                                <i class="fas fa-mobile-alt fa-2x text-info"></i>
+                                <br><small>PhonePe</small>
+                            </div>
+                            <div class="upi-app">
+                                <i class="fas fa-wallet fa-2x text-success"></i>
+                                <br><small>Paytm</small>
+                            </div>
+                            <div class="upi-app">
+                                <i class="fas fa-university fa-2x text-warning"></i>
+                                <br><small>BHIM</small>
+                            </div>
+                        </div>
+
+                        <!-- Payment Status -->
+                        <div class="text-center mb-4">
+                            <div id="paymentStatus" class="alert alert-info">
+                                <i class="fas fa-clock me-2"></i>Waiting for payment...
+                                <br><small>Complete payment in your UPI app</small>
+                            </div>
+                        </div>
+
+                        <!-- Action Buttons -->
+                        <div class="d-grid gap-2">
+                            <button class="btn btn-success btn-lg" onclick="simulatePayment()" id="confirmBtn">
+                                <i class="fas fa-check me-2"></i>I have completed the payment
+                            </button>
+                            <a th:href="@{/payment/request/{id}(id=${serviceRequest.id})}" class="btn btn-outline-secondary">
+                                <i class="fas fa-arrow-left me-2"></i>Back to Payment Options
+                            </a>
+                        </div>
+
+                        <!-- Instructions -->
+                        <div class="mt-4 p-3 bg-light rounded">
+                            <h6 class="mb-2"><i class="fas fa-info-circle text-info me-2"></i>How to pay:</h6>
+                            <ol class="small mb-0">
+                                <li>Open any UPI app (GPay, PhonePe, Paytm, etc.)</li>
+                                <li>Scan the QR code above</li>
+                                <li>Enter amount: ₹<span th:text="${amount}"></span></li>
+                                <li>Complete payment with UPI PIN</li>
+                                <li>Click "I have completed the payment" button</li>
+                            </ol>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function simulatePayment() {
+            // Show processing
+            document.getElementById('paymentStatus').innerHTML = 
+                '<i class="fas fa-spinner fa-spin me-2"></i>Processing payment...';
+            document.getElementById('paymentStatus').className = 'alert alert-warning';
+            document.getElementById('confirmBtn').disabled = true;
+            
+            // Simulate processing delay
+            setTimeout(() => {
+                // Redirect to actual payment processing
+                window.location.href = '/payment/process/' + [[${serviceRequest.id}]] + '?paymentMethod=UPI';
+            }, 2000);
+        }
+        
+        // Auto-refresh payment status every 10 seconds
+        setInterval(() => {
+            // In real implementation, this would check payment status via API
+            console.log('Checking payment status...');
+        }, 10000);
+    </script>
+</body>
+</html>
